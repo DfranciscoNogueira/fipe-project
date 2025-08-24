@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks: [magnet]
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks: [magnet]
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_DB: magnum
+      POSTGRES_USER: magnum
+      POSTGRES_PASSWORD: magnum
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [magnet]
+
+  api-1:
+    build: ./api-1
+    container_name: api-1
+    environment:
+      - QUARKUS_PROFILE=docker
+    ports:
+      - "8080:8080"
+    depends_on: [rabbitmq, redis, postgres]
+    networks: [magnet]
+
+  api-2:
+    build: ./api-2
+    container_name: api-2
+    environment:
+      - QUARKUS_PROFILE=docker
+    ports:
+      - "8081:8081"
+    depends_on: [rabbitmq, postgres]
+    networks: [magnet]
+
+networks:
+  magnet:
+
+volumes:
+  pgdata:
